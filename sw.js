@@ -1,5 +1,5 @@
 // Offline support: the whole app is precached so the tuner works without a connection.
-const VERSION = 'tuner-v2';
+const VERSION = 'tuner-v3';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/base.css',

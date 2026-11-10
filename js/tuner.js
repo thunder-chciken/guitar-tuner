@@ -251,17 +251,68 @@ function idle() {
   state.goodSince = 0;
 }
 
-// ---------- Install prompt ----------
-let deferred;
-addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault(); deferred = e; $('installBtn').hidden = false;
-});
+// ---------- Install ----------
+// Chrome/Edge on Android & desktop fire beforeinstallprompt and get a real one-tap
+// install. Everyone else (all iPhone browsers, Firefox, or Chrome before it is ready)
+// gets step-by-step instructions for their device instead of a dead button.
+let deferred = null;
+const ua = navigator.userAgent;
+const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /android/i.test(ua);
+const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+const shareIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/></svg>';
+const plusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+const step = (n, html) => `<li><span class="n">${n}</span><span>${html}</span></li>`;
+
+function installSteps() {
+  if (isIOS) {
+    const inSafari = !/crios|fxios|edgios|opios/i.test(ua);
+    return (inSafari
+      ? step(1, `Tap the <b>Share</b> button ${shareIcon} at the bottom of Safari`)
+      : step(1, `Tap the <b>Share</b> button ${shareIcon} next to the address bar`))
+      + step(2, `Scroll down and tap <b>Add to Home Screen</b> ${plusIcon}`)
+      + step(3, 'Tap <b>Add</b> in the top-right corner');
+  }
+  if (isAndroid) {
+    return step(1, 'Tap the <b>⋮</b> menu in the top-right of Chrome')
+      + step(2, 'Tap <b>Add to Home screen</b> or <b>Install app</b>')
+      + step(3, 'Tap <b>Install</b> to confirm');
+  }
+  return step(1, 'In Chrome or Edge, click the <b>install icon</b> at the right end of the address bar')
+    + step(2, 'Or open the <b>⋮</b> menu → <b>Cast, save and share</b> → <b>Install page as app</b>')
+    + step(3, 'On a phone, open this page in Safari (iPhone) or Chrome (Android)');
+}
+
+function openSheet() {
+  $('installSteps').innerHTML = installSteps();
+  $('installSheet').hidden = false;
+  $('installDone').focus();
+}
+const closeSheet = () => { $('installSheet').hidden = true; };
+$('installDone').onclick = closeSheet;
+$('installSheet').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSheet(); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; });
+addEventListener('appinstalled', () => { deferred = null; $('installBtn').hidden = true; closeSheet(); });
+
 $('installBtn').onclick = async () => {
-  if (!deferred) return;
-  deferred.prompt(); await deferred.userChoice; deferred = null; $('installBtn').hidden = true;
+  if (deferred) {
+    const prompt = deferred;
+    deferred = null; // a prompt event can only be used once
+    try {
+      await prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      if (outcome === 'accepted') $('installBtn').hidden = true;
+      return;
+    } catch { /* fall through to manual steps */ }
+  }
+  openSheet();
 };
-const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
+
+if (installed()) $('installBtn').hidden = true;
+if (!installed() && isIOS) {
   $('installTip').hidden = false;
   $('installTip').innerHTML = '<span style="font-size:22px">📲</span><span>Add this tuner to your Home Screen: tap <b>Share</b>, then <b>Add to Home Screen</b>. It works offline.</span>';
 }

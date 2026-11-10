@@ -101,6 +101,26 @@
   .feature span { color: var(--muted); font-size: 14px; }
   .gate .err { color: var(--red); font-size: 14px; margin-top: 14px; min-height: 1.4em; }
   .gate .secondary { margin-top: 6px; }
+  /* Install instructions sheet */
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(0,0,0,.35); animation: fade .2s ease;
+  }
+  .sheet {
+    width: 100%; max-width: 520px; background: var(--card); border-radius: 20px 20px 0 0;
+    padding: 10px 20px calc(env(safe-area-inset-bottom) + 20px); animation: rise .28s cubic-bezier(.2,.9,.3,1);
+  }
+  .sheet .grab { width: 36px; height: 5px; border-radius: 3px; background: var(--fill-2); margin: 0 auto 14px; }
+  .sheet h2 { font-size: 22px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sheet .lead { color: var(--muted); font-size: 15px; margin: 0 0 16px; }
+  .steps { list-style: none; margin: 0 0 18px; padding: 0; border-radius: 14px; background: var(--fill); }
+  .steps li { display: flex; gap: 12px; align-items: center; padding: 12px 14px; font-size: 16px; }
+  .steps li + li { border-top: 0.5px solid var(--sep); }
+  .steps .n { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; display: grid; place-items: center; }
+  .steps svg { width: 20px; height: 20px; vertical-align: -4px; color: var(--blue); }
+  @keyframes rise { from { transform: translateY(100%); } }
+  @keyframes fade { from { opacity: 0; } }
+  @media (min-width: 600px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: 20px; } }
 </style>
 </head>
 <body data-state="idle">
@@ -110,7 +130,7 @@
       <h1 class="large-title">Tuner</h1>
       <p class="subhead" id="sub">Pluck any string</p>
     </div>
-    <button class="btn small" id="installBtn" hidden>Install</button>
+    <button class="btn small" id="installBtn">Install</button>
   </div>
 
   <div class="card settings">
@@ -156,6 +176,16 @@
 
   <p class="card install-tip" id="installTip" hidden></p>
 </main>
+
+<div class="sheet-backdrop" id="installSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="installTitle">
+    <div class="grab" aria-hidden="true"></div>
+    <h2 id="installTitle">Add Tuner to your Home Screen</h2>
+    <p class="lead">It opens full-screen like an app and works offline.</p>
+    <ol class="steps" id="installSteps"></ol>
+    <button class="btn filled large" id="installDone">Got it</button>
+  </div>
+</div>
 
 <div class="gate" id="gate">
   <div class="gate-card">
