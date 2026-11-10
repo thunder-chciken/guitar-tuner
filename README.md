@@ -2,6 +2,8 @@
 
 A simple, iOS-style guitar tuner that installs on your phone like an app and works offline.
 
+**Live:** https://thunder-chciken.github.io/guitar-tuner/ (also deployed on Vercel from `main`)
+
 - Listens through the phone's microphone and detects which string you're playing
 - Big note + needle, with plain instructions: "Too low · Tighten", "Too high · Loosen", "In tune"
 - Checkmarks as each string is tuned
