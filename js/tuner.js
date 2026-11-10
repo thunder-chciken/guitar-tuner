@@ -294,24 +294,28 @@ $('installDone').onclick = closeSheet;
 $('installSheet').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSheet(); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
-addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; });
-addEventListener('appinstalled', () => { deferred = null; $('installBtn').hidden = true; closeSheet(); });
+// The offer is captured by the inline script in <head> (it can fire before this module runs).
+const takePrompt = () => { const p = deferred || window.__installPrompt; deferred = window.__installPrompt = null; return p; };
+document.addEventListener('installready', () => { deferred = window.__installPrompt; });
+const hideInstall = () => { $('installBtn').hidden = true; $('gateInstallBtn').hidden = true; };
+addEventListener('appinstalled', () => { deferred = window.__installPrompt = null; hideInstall(); closeSheet(); });
 
-$('installBtn').onclick = async () => {
-  if (deferred) {
-    const prompt = deferred;
-    deferred = null; // a prompt event can only be used once
+async function install() {
+  const prompt = takePrompt(); // each offer can only be used once
+  if (prompt) {
     try {
-      await prompt.prompt();
+      await prompt.prompt();   // Chrome's own "Install app?" pop-up
       const { outcome } = await prompt.userChoice;
-      if (outcome === 'accepted') $('installBtn').hidden = true;
+      if (outcome === 'accepted') hideInstall();
       return;
     } catch { /* fall through to manual steps */ }
   }
-  openSheet();
-};
+  openSheet(); // iPhone (no install pop-up exists there) or browser hasn't offered yet
+}
+$('installBtn').onclick = install;
+$('gateInstallBtn').onclick = install;
 
-if (installed()) $('installBtn').hidden = true;
+if (installed()) hideInstall();
 if (!installed() && isIOS) {
   $('installTip').hidden = false;
   $('installTip').innerHTML = '<span style="font-size:22px">📲</span><span>Add this tuner to your Home Screen: tap <b>Share</b>, then <b>Add to Home Screen</b>. It works offline.</span>';

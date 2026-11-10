@@ -14,6 +14,16 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Tuner">
+<script>
+  // Catch Chrome's install offer as early as possible; it fires once, often
+  // before the main script has loaded.
+  window.__installPrompt = null;
+  addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    window.__installPrompt = e;
+    document.dispatchEvent(new Event('installready'));
+  });
+</script>
 <link rel="stylesheet" href="css/base.css">
 <style>
   body { min-height: 100dvh; }
@@ -100,7 +110,7 @@
   .feature b { display: block; font-size: 15px; }
   .feature span { color: var(--muted); font-size: 14px; }
   .gate .err { color: var(--red); font-size: 14px; margin-top: 14px; min-height: 1.4em; }
-  .gate .secondary { margin-top: 6px; }
+  .gate .install-cta { margin-top: 10px; }
   /* Install instructions sheet */
   .sheet-backdrop {
     position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center;
@@ -198,6 +208,10 @@
       <div class="feature"><div class="ic" style="background:var(--orange)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><div><b>Private and offline</b><span>Your mic is only used on this device. Nothing is recorded.</span></div></div>
     </div>
     <button class="btn filled large" id="startBtn">Start Tuning</button>
+    <button class="btn large install-cta" id="gateInstallBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
+      Install App
+    </button>
     <div class="err" id="err" role="alert"></div>
   </div>
 </div>
