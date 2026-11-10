@@ -259,6 +259,10 @@ let deferred = null;
 const ua = navigator.userAgent;
 const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isAndroid = /android/i.test(ua);
+// Facebook, Instagram, Messenger, TikTok etc. open links in their own built-in
+// browser, which can never install web apps. Detect it so we can send people to Chrome.
+const inApp = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Messenger|musical_ly|TikTok|BytedanceWebview|Snapchat|Line\/|Twitter|LinkedInApp|Pinterest|; wv\)/i.test(ua);
+const chromeIntent = () => `intent://${location.host}${location.pathname}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(location.href)};end`;
 const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 
 const shareIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/></svg>';
@@ -266,6 +270,16 @@ const plusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const step = (n, html) => `<li><span class="n">${n}</span><span>${html}</span></li>`;
 
 function installSteps() {
+  if (inApp && isAndroid) {
+    return step(1, 'Tap <b>Open in Chrome</b> below')
+      + step(2, 'If that doesn’t work: tap <b>⋮</b> at the top-right, then <b>Open in Chrome</b> or <b>Open in external browser</b>')
+      + step(3, 'In Chrome, tap <b>Install App</b> → <b>Install</b>');
+  }
+  if (inApp && isIOS) {
+    return step(1, 'Tap <b>⋯</b> (top-right or bottom-right of this screen)')
+      + step(2, 'Tap <b>Open in Safari</b> or <b>Open in external browser</b>')
+      + step(3, `In Safari, tap <b>Share</b> ${shareIcon} → <b>Add to Home Screen</b>`);
+  }
   if (isIOS) {
     const inSafari = !/crios|fxios|edgios|opios/i.test(ua);
     return (inSafari
@@ -285,6 +299,9 @@ function installSteps() {
 }
 
 function openSheet() {
+  $('installTitle').textContent = inApp ? 'Open in your browser to install' : 'Add Tuner to your Home Screen';
+  $('installOpen').hidden = !(inApp && isAndroid);
+  $('installOpen').href = chromeIntent();
   $('installSteps').innerHTML = installSteps();
   $('installSheet').hidden = false;
   $('installDone').focus();
@@ -310,7 +327,16 @@ async function install() {
       return;
     } catch { /* fall through to manual steps */ }
   }
+  if (inApp && isAndroid) {
+    // Jump straight out of Facebook/Instagram into Chrome, where Install works.
+    location.href = chromeIntent();
+    setTimeout(openSheet, 900); // still here? show the manual way out
+    return;
+  }
   openSheet(); // iPhone (no install pop-up exists there) or browser hasn't offered yet
+}
+if (inApp && isAndroid) {
+  $('gateInstallBtn').lastChild.textContent = ' Open in Chrome to Install';
 }
 $('installBtn').onclick = install;
 $('gateInstallBtn').onclick = install;

@@ -126,6 +126,7 @@
   .steps { list-style: none; margin: 0 0 18px; padding: 0; border-radius: 14px; background: var(--fill); }
   .steps li { display: flex; gap: 12px; align-items: center; padding: 12px 14px; font-size: 16px; }
   .steps li + li { border-top: 0.5px solid var(--sep); }
+  #installOpen + #installDone { margin-top: 10px; background: var(--fill); color: var(--blue); }
   .steps .n { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; display: grid; place-items: center; }
   .steps svg { width: 20px; height: 20px; vertical-align: -4px; color: var(--blue); }
   @keyframes rise { from { transform: translateY(100%); } }
@@ -193,6 +194,7 @@
     <h2 id="installTitle">Add Tuner to your Home Screen</h2>
     <p class="lead">It opens full-screen like an app and works offline.</p>
     <ol class="steps" id="installSteps"></ol>
+    <a class="btn filled large" id="installOpen" href="#" hidden>Open in Chrome</a>
     <button class="btn filled large" id="installDone">Got it</button>
   </div>
 </div>
